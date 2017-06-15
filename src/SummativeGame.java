@@ -3,6 +3,7 @@ import java.awt.Graphics;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -35,11 +36,23 @@ public class SummativeGame extends JComponent {
 // YOUR GAME VARIABLES WOULD GO HERE
    
     // MAP VARIABLES
-                Rectangle ground = new Rectangle(0, 890, 1275, 40);
+                Rectangle ground = new Rectangle(0, 890, 1275, 60);
     
-                // random obstacle
-                Rectangle obstacle = new Rectangle(400, 520, 50, 40);
+                // Creates divider wall in the middle of the map
+                Rectangle wall1 = new Rectangle(630, 0, 5, 950);
+                
+                Rectangle wall2 = new Rectangle(625, 0, 5, 950);
+                
+                
+                // HOVERPADS
+                
+                Rectangle hover1 = new Rectangle(650, 500, 200, 15);
+                
+                Rectangle hover2 = new Rectangle(730, 100, 200, 15);
     
+                Rectangle hover3 = new Rectangle(1000, 300, 200, 15);
+                
+                Rectangle hover4 = new Rectangle(1000, 300, 200, 15);
     // MAP VARIABLES END HERE
     
     // ARRAYS AND ITERATORS GO HERE
@@ -88,7 +101,7 @@ public class SummativeGame extends JComponent {
                 boolean backward = false;
   
                 // Bullet speed and direction variables
-                int bulletSpeed = 5;
+                int bulletSpeed = 10;
                 // +1 - Right
                 // -1 - Left
                 int bulletDirection = 1;
@@ -100,8 +113,14 @@ public class SummativeGame extends JComponent {
                 boolean p1Pending = false;
                 
                 // Controls the delay in the shooting mechanism a.k.a "fire rate"
-                int delay = 1200;
+                int delay = 800;
                 long nextTime = 0;
+                
+                // Booleans controlling direction player 1 is facing
+                
+          
+                
+                
     
     // PLAYER 1 VARIABLES END HERE //
     
@@ -122,6 +141,8 @@ public class SummativeGame extends JComponent {
                 boolean inAir2 = false;
                 boolean onGround2 = true;
                 boolean jump2;
+                
+                // if the bullet has passed 
                 boolean passed2; 
     
     
@@ -136,7 +157,7 @@ public class SummativeGame extends JComponent {
                 boolean backward2 = false;
   
                 // Bullet speed and direction variables
-                int bulletSpeed2 = 5;
+                int bulletSpeed2 = 10;
                 // +1 - Right
                 // -1 - Left
                 int bulletDirection2 = -1;
@@ -148,9 +169,16 @@ public class SummativeGame extends JComponent {
                 boolean p2Pending = false;
     
     
-    
-    
     // PLAYER 2 VARIABLES END HERE //
+                
+    // SCORE KEEPING VARIABLES START HERE // 
+                
+                // score storage for both player 1 and 2
+                int player1Score = 0;
+                int player2Score = 0;
+                
+                // arial font for scoreboard
+                Font myFont = new Font("Arial", Font.BOLD, 75);
     
     
     // GAME VARIABLES END HERE   
@@ -193,24 +221,39 @@ public class SummativeGame extends JComponent {
 
         // GAME DRAWING GOES HERE
         
+        // creating player 1
         g.fillRect(player1.x, player1.y, player1.width, player1.height);
         
+        // creating player 2
         g.fillRect(player2.x, player2.y, player2.width, player2.height);
         
+        // creating ground
         g.fillRect(ground.x, ground.y, ground.width, ground.height);
         
-        g.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-        
+        // creating divider walls
+        g.fillRect(wall1.x, wall1.y, wall1.width, wall1.height);
+        g.fillRect(wall2.x, wall2.y, wall2.width, wall2.height);
       
-        
+        // creates bullets for player 1
         for(Rectangle bullets: bullet){
              g.fillRect(bullets.x, bullets.y, bullets.width, bullets.height);
             }
         
+        // creates bullets for player 2
         for(Rectangle bullets2: bullet2){
              g.fillRect(bullets2.x, bullets2.y, bullets2.width, bullets2.height);
             }
         
+        // SCOREBOARD
+        g.setFont(myFont);
+        g.setColor(Color.red);
+        g.drawString("" + player1Score, WIDTH/2-100, 75);
+        g.drawString("" + player2Score, WIDTH/2+50, 75);
+        
+        // HOVERPADS
+        g.fillOval(hover1.x, hover1.y, hover1.width, hover1.height);
+        g.fillOval(hover2.x, hover2.y, hover2.width, hover2.height);
+        g.fillOval(hover3.x, hover3.y, hover3.width, hover3.height);
         
         // GAME DRAWING ENDS HERE
     }
@@ -247,9 +290,11 @@ public class SummativeGame extends JComponent {
             shooting();
 
             
+            // delay timer used to control fire rate for both players
             if(startTime > nextTime){
                  nextTime = startTime + delay;
                 p1Pending = false;
+                p2Pending = false;
             }
             
             
@@ -268,6 +313,8 @@ public class SummativeGame extends JComponent {
 
             // movement logic for player 1 and 2
             moving();
+            
+            scoreBoard();
             
             // controls speed of the player
 //            double movementTransfer = playerDirection * (0.7) * horizVel;
@@ -295,7 +342,7 @@ public class SummativeGame extends JComponent {
                     Thread.sleep(desiredTime - deltaTime);
                 }
             } catch (Exception e) {
-            };
+            }
         }
     }
 
@@ -334,38 +381,62 @@ public class SummativeGame extends JComponent {
         @Override
         public void keyPressed(KeyEvent e){
             
+            // player 1 presses W to jump
             if(e.getKeyCode() == KeyEvent.VK_W) {
                 jump = true;
                 inAir = false;
             }
             
+            // player 1 presses D to go forwards
             if(e.getKeyCode() == KeyEvent.VK_D) {
+                // player will begin moving forward
                 forward = true;
+                // playing is not moving backwards anymore
                 backward = false;
+                
+                
+                
             }
+            // player 1 presses A to move backwards
             if(e.getKeyCode() == KeyEvent.VK_A) {
+                // player will begin moving backwards
                 forward = false;
+                // player is not moving forwards anymore
                 backward = true;
+                
+               
             }
             
-            if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+            // player 1 presses V to fire
+            if(e.getKeyCode() == KeyEvent.VK_V) {
                 fireRight1 = true;
+                
+                
             }
             
+            // PLAYER 2
+            
+            // player 2 persses up arrow to jump
             if(e.getKeyCode() == KeyEvent.VK_UP) {
                 jump2 = true;
                 inAir2 = false;
             }
-            
+            // player 2 presses right arrow to move RIGHT
             if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
                 forward2 = true;
                 backward2 = false;
+                
+                
             }
+            // player 2 presses left arrow to move LEFT
             if(e.getKeyCode() == KeyEvent.VK_LEFT) {
                 forward2 = false;
                 backward2 = true;
+                
+               
             }
             
+            // player 2 presses ENTER to fire (CHANGE SOON)
             if(e.getKeyCode() == KeyEvent.VK_ENTER) {
                 fireLeft2 = true;
             }
@@ -377,15 +448,19 @@ public class SummativeGame extends JComponent {
         public void keyReleased(KeyEvent e){
             
             // PLAYER 1
+            // Pressing D to go forwards
             if(e.getKeyCode() == KeyEvent.VK_D) {
                 forward = false;
             }
+            
              if(e.getKeyCode() == KeyEvent.VK_A) {
                 backward = false;
             }
-            if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+            if(e.getKeyCode() == KeyEvent.VK_V) {
                 fireRight1 = false;
             }
+            
+            
             
              //PLAYER 2
             if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
@@ -427,10 +502,17 @@ public class SummativeGame extends JComponent {
             
                     }
                     
-                    if(player1.intersects(obstacle)){
+                    if(player1.intersects(wall2)){
                         horizVel = 0;
-                        player1.x = obstacle.x - player1.width;
-                
+                        player1.x = wall2.x - player1.width;
+                    }
+                    
+                    if(player1.x <= 0) {
+                        player1.x = 0;
+                    }
+                    
+                    if(player1.y <= 0) {
+                        player1.y = 0;
                     }
         
         // PLAYER 1 COLLISIONS END HERE
@@ -446,13 +528,19 @@ public class SummativeGame extends JComponent {
             
                     }
                     
-                    if(player1.intersects(obstacle)){
+                    if(player2.intersects(wall1)){
                         horizVel2 = 0;
-                        player2.x = obstacle.x - player2.width;
+                        player2.x = wall1.x + wall1.width;
                 
                     }
                     
+                    if(player2.x + player2.width >= WIDTH) {
+                        player2.x = WIDTH - player2.width;
+                    }
                     
+                    if(player2.y <= 0) {
+                        player2.y = 0;
+                    }
                     
                     
         // PLAYER 2 COLLISIONS END HERE
@@ -476,7 +564,7 @@ public class SummativeGame extends JComponent {
                     }
                     if(!backward && !forward) {
                         if(horizVel < 0)
-                        horizVel = horizVel + 3;
+                        horizVel = horizVel + 0.5;
                     }
         
                     if(horizVel >= 10) {
@@ -495,30 +583,37 @@ public class SummativeGame extends JComponent {
         
         // PLAYER 2 MOVEMENT STARTS HERE
                     
+                    // accelerating forwards
                     if(forward2) {
                         horizVel2 = horizVel2 + 0.5;
                     }
-                 if(!forward2 && !backward2) {
+                    // descelerating when no button pressed
+                    if(!forward2 && !backward2) {
                        if(horizVel2 > 0)
                        horizVel2 = horizVel2 - 1;
                     }
-        
+                    
+                    // accelerating backwards
                     if(backward2) {
                         horizVel2 = horizVel2 - 0.5;
                     }
+                    
+                    // descelerating when no button pressed
                     if(!backward2 && !forward2) {
                        if(horizVel2 < 0)
-                        horizVel2 = horizVel2 + 3;
+                        horizVel2 = horizVel2 + 0.5;
                     }
-        
+                    
+                    // limits forward velocity
                     if(horizVel2 >= 10) {
                        horizVel2 = 10;
                     }
-        
+                    // limits backwards velocity
                     if(horizVel2 <= -10) {
                      horizVel2 = -10;
                     }
-        
+                    
+                    // updates movement speed
                     int movement2 = (int) horizVel2;
                     player2.x = player2.x + movement2;
             
@@ -565,7 +660,7 @@ public class SummativeGame extends JComponent {
         if(fireRight1){
                 if(p1Pending == false){
                    bullet.add(new Rectangle(player1.x, player1.y, 10,10));
-                   passed = false;
+                  // passed = false;
                    p1Pending = true;
                 }
                    
@@ -574,15 +669,10 @@ public class SummativeGame extends JComponent {
             
             for(Rectangle bullets: bullet){
                 
-                    
-                if (passed) {
-                    
-                    p1Pending = false;
-                    passed = false;
-                }
-                
                  bullets.x += bulletSpeed;
-             
+               
+                
+               
             }
             
             // FOR PLAYER 2
@@ -599,14 +689,7 @@ public class SummativeGame extends JComponent {
             
             for(Rectangle bullets2: bullet2){
                 
-                    
-                if (passed2) {
-                    
-                    p2Pending = false;
-                    passed2 = false;
-                }
-                
-                 bullets2.x += bulletSpeed2;
+                 bullets2.x -= bulletSpeed2;
              
             }
         
@@ -620,5 +703,38 @@ public class SummativeGame extends JComponent {
             // player 2 gravity effect
             dy2 = dy2 + gravity2;
     }
+    
+    public void scoreBoard() {
+        
+        // FOR PLAYER 1 SCORE INCREASE
+        
+        // Runs through bullet array to detect whether every bullet has hit or not
+        for (int i = 0; i < bullet.size(); i++) {
+            
+            // when one of the bullets from player 1 hits player 2, player 1 recieves + 1 to their score
+             if(player2.intersects(bullet.get(i))) {
+                 
+                 player1Score ++;
+                 bullet.remove(i);
+                 
+          }
+        }
+        
+        // FOR PLAYER 2 SCORE INCREASE
+        
+        // Runs through bullet array to detect whether every bullet has hit or not
+        for (int i = 0; i < bullet2.size(); i++) {
+            
+            // when one of the bullets from player 2 hits player 1, player 2 recieves + 1 to their score
+             if(player1.intersects(bullet2.get(i))) {
+                 player2Score ++;
+                 bullet2.remove(i);
+                 
+         }
+        
+        
+    }
+    }
+    
     
 }
